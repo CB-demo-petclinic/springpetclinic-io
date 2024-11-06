@@ -68,5 +68,12 @@ jobs:
           context: .
           destination: ${{ secrets.STAGING_DOCKER_REGISTRY }}/${{ secrets.STAGING_DOCKER_USERNAME }}/springpetclinic:3.2.4
 
+      - uses: cloudbees-io/publish-test-results@v1
+        name: test
+        kind: test
+        with:
+          test-type: JUnit
+          folder-name: /cloudbees/workspace/target/surefire-reports/*.xml
+
   
           
