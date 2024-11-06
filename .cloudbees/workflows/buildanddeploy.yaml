@@ -96,7 +96,6 @@ jobs:
             - **JIRA Issue Key:** "${{ steps.commitinfo.outputs.jira_key }}"
           
   StaticAnalysis:
-    needs: Build
     outputs:
       BLOCKER_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.BLOCKER_COUNT }}
       CRITICAL_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.CRITICAL_COUNT }}
@@ -160,4 +159,12 @@ jobs:
             |  ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }} |
 
 
-      
+  Approval:
+    needs: Build
+    type: manual-approval
+    environment: ashok
+    steps:
+      - name: Approval
+        uses: docker://maven:3-eclipse-temurin-17
+        run: |
+          echo "Manual approval required before proceeding to deployment."
