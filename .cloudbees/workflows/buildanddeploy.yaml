@@ -7,15 +7,35 @@ on:
       - master
 jobs:
   Build:
+    outputs:
+      unitTestResults: ${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}
+      commit_id: ${{ steps.commitinfo.outputs.commit_id }}
+      commit_msg: ${{ steps.commitinfo.outputs.commit_msg }}
+      jira_key: ${{ steps.commitinfo.outputs.jira_key }}
     steps:
       - name: Configure git
         uses: docker://alpine/git:latest
         run: |
           git config --global --add safe.directory /cloudbees/workspace
-
       - name: Checkout
         uses: cloudbees-io/checkout@v1
-      
+      - name: Get Commit Info
+        uses: docker://alpine/git:latest
+        id: commitinfo
+        run: |
+          COMMIT_ID=$(git rev-parse HEAD)
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit ID: $COMMIT_ID"
+          echo "Commit Message: $COMMIT_MSG"
+          # Extract the JIRA issue key (assuming format like PROJECTKEY-123)
+          JIRA_KEY=$(echo "$COMMIT_MSG" | grep -oE "[A-Z]+-[0-9]+")
+          if [ -z "$JIRA_KEY" ]; then
+            echo "Error: Commit message must include a valid JIRA issue key." >&2
+            exit 1
+          fi
+          echo "commit_id=${COMMIT_ID}" >> $CLOUDBEES_OUTPUTS/commit_id
+          echo "commit_msg=${COMMIT_MSG}" >> $CLOUDBEES_OUTPUTS/commit_msg
+          echo "jira_key=${JIRA_KEY}" >> $CLOUDBEES_OUTPUTS/jira_key
       - uses: docker://maven:3-eclipse-temurin-17
         name: Build
         kind: build
