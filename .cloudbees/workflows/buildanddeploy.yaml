@@ -2,7 +2,7 @@ apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
 name: Flag_deployement
 on:
-  push:
+  pull_request:
     branches:
       - master
 jobs:
@@ -36,16 +36,13 @@ jobs:
           echo "commit_id=${COMMIT_ID}" >> $CLOUDBEES_OUTPUTS/commit_id
           echo "commit_msg=${COMMIT_MSG}" >> $CLOUDBEES_OUTPUTS/commit_msg
           echo "jira_key=${JIRA_KEY}" >> $CLOUDBEES_OUTPUTS/jira_key
-
-
       - uses: docker://maven:3-eclipse-temurin-17
         name: Build
         kind: build
         run: |
-         mvn spring-javaformat:apply
-         mvn clean install
+          mvn spring-javaformat:apply
+          mvn clean install
         shell: sh
-
       - name: RunUnitTest
         id: RunUnitTest
         uses: docker://maven:3-eclipse-temurin-17
@@ -61,7 +58,6 @@ jobs:
             -Dsonar.java.binaries=/cloudbees/workspace/target/classes \
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-      
       - name: Configure container registry credentials
         id: dockerconfig
         uses: cloudbees-io/configure-oci-credentials@v1
@@ -69,21 +65,18 @@ jobs:
           registry: ${{ secrets.STAGING_DOCKER_REGISTRY }}
           username: ${{ secrets.STAGING_DOCKER_USERNAME }}
           password: ${{ secrets.STAGING_DOCKER_PASSWORD }}
-          
       - name: Push image to OCI registry
         uses: cloudbees-io/kaniko@v1
         with:
           dockerfile: Dockerfile
           context: .
           destination: ${{ secrets.STAGING_DOCKER_REGISTRY }}/${{ secrets.STAGING_DOCKER_USERNAME }}/springpetclinic:3.2.4
-
       - uses: cloudbees-io/publish-test-results@v1
         name: test
         kind: test
         with:
           test-type: JUnit
           folder-name: /cloudbees/workspace/target/surefire-reports/*.xml
-
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
@@ -94,7 +87,6 @@ jobs:
             ## Unit Test Results
             - **Unit Test Results:** "${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}"
             - **JIRA Issue Key:** "${{ steps.commitinfo.outputs.jira_key }}"
-          
   StaticAnalysis:
     outputs:
       BLOCKER_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.BLOCKER_COUNT }}
@@ -115,7 +107,6 @@ jobs:
           sonar-exclusion: src/main/java
           cover-file-name: ./pom.xml
           language: LANGUAGE_JAVA
-
       - uses: cloudbees-io/snyk-sast-scan-code@v1
         name: scan1
         kind: scan
@@ -123,7 +114,6 @@ jobs:
           orgname: ashok.alogicfocus
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           language: LANGUAGE_JAVA
-  
       - name: Fetch SonarQube Issues
         id: FetchSonarQubeIssues
         uses: docker://alpine/git:latest
@@ -157,8 +147,6 @@ jobs:
             | ${{ steps.FetchSonarQubeIssues.outputs.MAJOR_COUNT }} |
 
             |  ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }} |
-
-
   Approval:
     needs: Build
     type: manual-approval
@@ -168,7 +156,6 @@ jobs:
         uses: docker://maven:3-eclipse-temurin-17
         run: |
           echo "Manual approval required before proceeding to deployment."
-
   SmokeTest:
     needs: Approval
     steps:
@@ -178,7 +165,6 @@ jobs:
         uses: docker://maven:3-eclipse-temurin-17
         run: |
           mvn test
-
   Deploy:
     needs: SmokeTest
     environment: production
