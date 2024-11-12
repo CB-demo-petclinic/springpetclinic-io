@@ -71,6 +71,15 @@ jobs:
           dockerfile: Dockerfile
           context: .
           destination: ${{ secrets.STAGING_DOCKER_REGISTRY }}/${{ secrets.STAGING_DOCKER_USERNAME }}/springpetclinic:3.2.4
+
+
+      - name: Scan with Trivy
+        uses: cloudbees-io/trivy-scan-container@v1
+        with:
+          image-location: "caannamalai/springpetclinic"
+          image-tag: "3.2.4"
+
+
       - uses: cloudbees-io/publish-test-results@v1
         name: test
         kind: test
