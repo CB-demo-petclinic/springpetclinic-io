@@ -165,16 +165,16 @@ jobs:
             | ${{ steps.FetchSonarQubeIssues.outputs.MAJOR_COUNT }} |
 
             |  ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }} |
-  Approval:
-    needs: Build
-    type: manual-approval
+  Exit_Gate:
     environment: ashok
     steps:
-      - name: Approval
-        uses: docker://maven:3-eclipse-temurin-17
+      - uses: docker://maven:3-eclipse-temurin-17
+        name: Manual Approval
         run: |
           echo "Manual approval required before proceeding to deployment."
-  SmokeTest:
+    needs:
+      - Deploy_Development
+  SmokeTest_Dev:
     steps:
       - uses: cloudbees-io/checkout@v1
         name: Checkout
@@ -183,9 +183,9 @@ jobs:
         run: |
           mvn test
     needs:
-      - Deploy
-  Deploy:
-    environment: production
+      - Deploy_Development
+  Deploy_Development:
+    environment: snaqvi_DEV
     steps:
       - uses: cloudbees-io/checkout@v1
         name: Checkout
@@ -199,4 +199,56 @@ jobs:
         with:
           kustomization-base-dir: ${{ cloudbees.workspace }}/base
     needs:
-      - Approval
+      - Build
+  Deploy_QA:
+    environment: snaqvi_QA
+    steps:
+      - uses: cloudbees-io/checkout@v1
+        name: Checkout
+      - uses: cashokannamalai/kubeconfig@v1
+        name: Set kubeconfig
+        with:
+          secname: ${{ secrets.kubeconfig }}
+      - uses: cloudbees-io/kustomize-deploy@v1
+        name: deploy
+        kind: deploy
+        with:
+          kustomization-base-dir: ${{ cloudbees.workspace }}/base
+    needs:
+      - Exit_Gate
+  SmokeTest_QA:
+    steps:
+      - uses: cloudbees-io/checkout@v1
+        name: Checkout
+      - uses: docker://maven:3-eclipse-temurin-17
+        name: Smoke Test
+        run: |
+          mvn test
+    needs:
+      - Deploy_QA
+  Deploy_Prod:
+    environment: snaqvi_PROD
+    steps:
+      - uses: cloudbees-io/checkout@v1
+        name: Checkout
+      - uses: cashokannamalai/kubeconfig@v1
+        name: Set kubeconfig
+        with:
+          secname: ${{ secrets.kubeconfig }}
+      - uses: cloudbees-io/kustomize-deploy@v1
+        name: deploy
+        kind: deploy
+        with:
+          kustomization-base-dir: ${{ cloudbees.workspace }}/base
+    needs:
+      - Deploy_QA
+  SmokeTest_Prod:
+    steps:
+      - uses: cloudbees-io/checkout@v1
+        name: Checkout
+      - uses: docker://maven:3-eclipse-temurin-17
+        name: Smoke Test
+        run: |
+          mvn test
+    needs:
+      - Deploy_Prod
