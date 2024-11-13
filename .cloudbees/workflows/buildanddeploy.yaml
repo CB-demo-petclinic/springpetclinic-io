@@ -116,6 +116,14 @@ jobs:
           cover-file-name: ./pom.xml
           language: LANGUAGE_JAVA
 
+      - name: Scan with Snyk Container
+        uses: cloudbees-io/snyk-scan-container@v1
+        with:
+          orgname: ashok.alogicfocus
+          token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
+          image-location: https://hub.docker.com/repository/docker/caannamalai/springpetclinic
+          image-tag: 3.2.4
+
 
       - uses: cloudbees-io/snyk-sast-scan-code@v1
         name: scan1
