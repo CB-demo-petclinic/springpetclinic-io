@@ -121,7 +121,7 @@ jobs:
         with:
           orgname: ashok.alogicfocus
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
-          image-location: https://hub.docker.com/repository/docker/caannamalai/springpetclinic
+          image-location: caannamalai/springpetclinic
           image-tag: 3.2.4
 
 
