@@ -115,6 +115,8 @@ jobs:
           sonar-exclusion: src/main/java
           cover-file-name: ./pom.xml
           language: LANGUAGE_JAVA
+
+
       - uses: cloudbees-io/snyk-sast-scan-code@v1
         name: scan1
         kind: scan
@@ -122,6 +124,16 @@ jobs:
           orgname: ashok.alogicfocus
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           language: LANGUAGE_JAVA
+
+
+      - uses: cloudbees-io/snyk-sca-scan-dependency@v1
+        name: Scan with Snyk SCA
+        kind: scan
+        with:
+          orgname: ashok.alogicfocus
+          token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
+          language: LANGUAGE_JAVA
+
       - name: Fetch SonarQube Issues
         id: FetchSonarQubeIssues
         uses: docker://alpine/git:latest
