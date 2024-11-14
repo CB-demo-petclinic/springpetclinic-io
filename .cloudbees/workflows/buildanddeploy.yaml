@@ -158,19 +158,17 @@ jobs:
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
-          content: |
+          content: |-
             ## SonarQube Analysis Results
-
-            | Severity And Issue Count |
-            |------------------------|
-
-            |  ${{ steps.FetchSonarQubeIssues.outputs.BLOCKER_COUNT }} |
-
-            | ${{ steps.FetchSonarQubeIssues.outputs.CRITICAL_COUNT }} |
-
-            | ${{ steps.FetchSonarQubeIssues.outputs.MAJOR_COUNT }} |
-
-            |  ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }} |
+            
+            | Severity             | Issue Count |
+            |----------------------|-------------|
+            | BLOCKER_COUNT        | ${{ steps.FetchSonarQubeIssues.outputs.BLOCKER_COUNT }} |
+            | CRITICAL_COUNT       | ${{ steps.FetchSonarQubeIssues.outputs.CRITICAL_COUNT }} |
+            | MAJOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MAJOR_COUNT }} |
+            | MINOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }} |
+          format: MARKDOWN
+            
   Exit_Gate:
     environment: ashok
     steps:
