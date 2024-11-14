@@ -33,9 +33,9 @@ jobs:
             echo "Error: Commit message must include a valid JIRA issue key." >&2
             exit 1
           fi
-          echo "commit_id=${COMMIT_ID}" >> $CLOUDBEES_OUTPUTS/commit_id
-          echo "commit_msg=${COMMIT_MSG}" >> $CLOUDBEES_OUTPUTS/commit_msg
-          echo "jira_key=${JIRA_KEY}" >> $CLOUDBEES_OUTPUTS/jira_key
+          echo "${COMMIT_ID}" >> $CLOUDBEES_OUTPUTS/commit_id
+          echo "${COMMIT_MSG}" >> $CLOUDBEES_OUTPUTS/commit_msg
+          echo "${JIRA_KEY}" >> $CLOUDBEES_OUTPUTS/jira_key
       - uses: docker://maven:3-eclipse-temurin-17
         name: Build
         kind: build
@@ -81,12 +81,14 @@ jobs:
         uses: cloudbees-io/publish-evidence-item@v1
         with:
           content: |
+            ## JIRA Information
+            - **JIRA Issue Key:** "${{ steps.commitinfo.outputs.jira_key }}"
             ## Commit Information
             - **Commit ID:** "${{ steps.commitinfo.outputs.commit_id }}"
             - **Commit Message:** "${{ steps.commitinfo.outputs.commit_msg }}"
             ## Unit Test Results
             - **Unit Test Results:** "${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}"
-            - **JIRA Issue Key:** "${{ steps.commitinfo.outputs.jira_key }}"
+            ${{PETCLINIC_UT_RESULTS}} 
 
 
 
