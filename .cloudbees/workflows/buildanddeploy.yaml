@@ -87,6 +87,9 @@ jobs:
             ## Unit Test Results
             - **Unit Test Results:** "${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}"
             - **JIRA Issue Key:** "${{ steps.commitinfo.outputs.jira_key }}"
+
+
+
   StaticAnalysis:
     outputs:
       BLOCKER_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.BLOCKER_COUNT }}
@@ -96,20 +99,24 @@ jobs:
     steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
+
       - name: Scan with GitHub Advanced Security
         uses: cloudbees-io/github-security-sast-scan-code@v1
         with:
           token: ${{ secrets.GITHUB_SECRET }}
           language: LANGUAGE_JAVA
+
       - name: Scan with Find Security Bugs
         uses: cloudbees-io/findsecbugs-sast-scan-code@v1
         with:
           language: LANGUAGE_JAVA
+
       - name: Scan with SonarQube bundled
         uses: cloudbees-io/sonarqube-bundled-sast-scan-code@v1
         with:
           sonar-exclusion: src/main/java
           cover-file-name: ./pom.xml
+
           language: LANGUAGE_JAVA
       - name: Scan with Snyk Container
         uses: cloudbees-io/snyk-scan-container@v1
@@ -118,6 +125,7 @@ jobs:
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           image-location: caannamalai/springpetclinic
           image-tag: 3.2.4
+
       - uses: cloudbees-io/snyk-sast-scan-code@v1
         name: scan1
         kind: scan
@@ -125,6 +133,7 @@ jobs:
           orgname: ashok.alogicfocus
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           language: LANGUAGE_JAVA
+
       - uses: cloudbees-io/snyk-sca-scan-dependency@v1
         name: Scan with Snyk SCA
         kind: scan
@@ -132,6 +141,7 @@ jobs:
           orgname: ashok.alogicfocus
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           language: LANGUAGE_JAVA
+
       - name: Fetch SonarQube Issues
         id: FetchSonarQubeIssues
         uses: docker://alpine/git:latest
@@ -252,4 +262,5 @@ jobs:
           mvn test
     needs:
       - Deploy_Prod
+
 
