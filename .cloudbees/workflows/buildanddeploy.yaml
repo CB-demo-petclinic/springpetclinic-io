@@ -88,7 +88,7 @@ jobs:
             - **Commit Message:** "${{ steps.commitinfo.outputs.commit_msg }}"
             ## Unit Test Results
             - **Unit Test Results:** "${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}"
-            ${{properties.PETCLINIC_UT_RESULTS}} 
+            ${{vars.PETCLINIC_UT_RESULTS}} 
 
 
 
