@@ -162,7 +162,7 @@ jobs:
             | MINOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }} |
           format: MARKDOWN
   Exit_Gate:
-    environment: ashok
+    environment: snaqvi_DEV
     steps:
       - uses: cloudbees-io/publish-evidence-item@v1
         name: Publish Results
