@@ -80,7 +80,7 @@ jobs:
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
-          content: |
+          content: |-
             ## JIRA Information
             - **JIRA Issue Key:** "${{ steps.commitinfo.outputs.jira_key }}"
             ## Commit Information
@@ -88,8 +88,9 @@ jobs:
             - **Commit Message:** "${{ steps.commitinfo.outputs.commit_msg }}"
             ## Unit Test Results
             - **Unit Test Results:** "${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}"
+            ## Code Coverage Report
             ${{vars.PETCLINIC_UT_RESULTS}} 
-
+          format: MARKDOWN
 
 
   StaticAnalysis:
