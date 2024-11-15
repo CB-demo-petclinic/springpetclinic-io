@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 jobs:
   Build:
     outputs:
@@ -71,14 +72,12 @@ jobs:
           dockerfile: Dockerfile
           context: .
           destination: ${{ secrets.STAGING_DOCKER_REGISTRY }}/${{ secrets.STAGING_DOCKER_USERNAME }}/springpetclinic:3.2.4
-
       - uses: cloudbees-io/publish-test-results@v1
         name: test
         kind: test
         with:
           test-type: JUnit
           folder-name: /cloudbees/workspace/target/surefire-reports/*.xml
-
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
@@ -103,19 +102,16 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_SECRET }}
           language: LANGUAGE_JAVA
-
       - name: Scan with Find Security Bugs
         uses: cloudbees-io/findsecbugs-sast-scan-code@v1
         with:
-          language: "LANGUAGE_JAVA"
-          
+          language: LANGUAGE_JAVA
       - name: Scan with SonarQube bundled
         uses: cloudbees-io/sonarqube-bundled-sast-scan-code@v1
         with:
           sonar-exclusion: src/main/java
           cover-file-name: ./pom.xml
           language: LANGUAGE_JAVA
-
       - name: Scan with Snyk Container
         uses: cloudbees-io/snyk-scan-container@v1
         with:
@@ -123,8 +119,6 @@ jobs:
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           image-location: caannamalai/springpetclinic
           image-tag: 3.2.4
-
-
       - uses: cloudbees-io/snyk-sast-scan-code@v1
         name: scan1
         kind: scan
@@ -132,8 +126,6 @@ jobs:
           orgname: ashok.alogicfocus
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           language: LANGUAGE_JAVA
-
-
       - uses: cloudbees-io/snyk-sca-scan-dependency@v1
         name: Scan with Snyk SCA
         kind: scan
@@ -141,7 +133,6 @@ jobs:
           orgname: ashok.alogicfocus
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           language: LANGUAGE_JAVA
-
       - name: Fetch SonarQube Issues
         id: FetchSonarQubeIssues
         uses: docker://alpine/git:latest
@@ -208,6 +199,3 @@ jobs:
         kind: deploy
         with:
           kustomization-base-dir: ${{ cloudbees.workspace }}/base
-          
-          
-          
