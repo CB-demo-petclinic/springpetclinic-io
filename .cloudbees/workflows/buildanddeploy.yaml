@@ -242,6 +242,12 @@ jobs:
         name: Smoke Test
         run: |
           mvn test
+      - name: Publish Results
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ${{vars.PETCLINIC_SMOKETEST_QA_RESULTS}} 
+          format: MARKDOWN          
     needs:
       - Deploy_QA
   Deploy_Prod:
@@ -268,6 +274,12 @@ jobs:
         name: Smoke Test
         run: |
           mvn test
+      - name: Publish Results
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ${{vars.PETCLINIC_SMOKETEST_PROD_RESULTS}} 
+          format: MARKDOWN          
     needs:
       - Deploy_Prod
 
