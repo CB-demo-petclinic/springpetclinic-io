@@ -91,8 +91,6 @@ jobs:
             ## Code Coverage Report
             ${{vars.PETCLINIC_UT_RESULTS}} 
           format: MARKDOWN
-
-
   StaticAnalysis:
     outputs:
       BLOCKER_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.BLOCKER_COUNT }}
@@ -179,6 +177,13 @@ jobs:
         name: Manual Approval
         run: |
           echo "Manual approval required before proceeding to deployment."
+      - name: Publish Results
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## Exit Gates Results
+            ${{vars.PETCLINIC_DEV_EXIT_GATE}} 
+          format: MARKDOWN
     needs:
       - Deploy_Development
   SmokeTest_Dev:
@@ -189,6 +194,12 @@ jobs:
         name: Smoke Test
         run: |
           mvn test
+      - name: Publish Results
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ${{vars.PETCLINIC_SMOKETEST_DEV_RESULTS}} 
+          format: MARKDOWN
     needs:
       - Deploy_Development
   Deploy_Development:
