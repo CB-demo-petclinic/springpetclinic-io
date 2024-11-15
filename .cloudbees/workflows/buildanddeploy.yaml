@@ -100,20 +100,15 @@ jobs:
     steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
-
-     
-
       - name: Scan with Find Security Bugs
         uses: cloudbees-io/findsecbugs-sast-scan-code@v1
         with:
           language: LANGUAGE_JAVA
-
       - name: Scan with SonarQube bundled
         uses: cloudbees-io/sonarqube-bundled-sast-scan-code@v1
         with:
           sonar-exclusion: src/main/java
           cover-file-name: ./pom.xml
-
           language: LANGUAGE_JAVA
       - name: Scan with Snyk Container
         uses: cloudbees-io/snyk-scan-container@v1
@@ -122,7 +117,6 @@ jobs:
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           image-location: caannamalai/springpetclinic
           image-tag: 3.2.4
-
       - uses: cloudbees-io/snyk-sast-scan-code@v1
         name: scan1
         kind: scan
@@ -130,7 +124,6 @@ jobs:
           orgname: ashok.alogicfocus
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           language: LANGUAGE_JAVA
-
       - uses: cloudbees-io/snyk-sca-scan-dependency@v1
         name: Scan with Snyk SCA
         kind: scan
@@ -138,7 +131,6 @@ jobs:
           orgname: ashok.alogicfocus
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           language: LANGUAGE_JAVA
-
       - name: Fetch SonarQube Issues
         id: FetchSonarQubeIssues
         uses: docker://alpine/git:latest
@@ -161,7 +153,7 @@ jobs:
         with:
           content: |-
             ## SonarQube Analysis Results
-            
+
             | Severity             | Issue Count |
             |----------------------|-------------|
             | BLOCKER_COUNT        | ${{ steps.FetchSonarQubeIssues.outputs.BLOCKER_COUNT }} |
@@ -169,21 +161,20 @@ jobs:
             | MAJOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MAJOR_COUNT }} |
             | MINOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }} |
           format: MARKDOWN
-            
   Exit_Gate:
     environment: ashok
     steps:
-      - uses: docker://maven:3-eclipse-temurin-17
-        name: Manual Approval
-        run: |
-          echo "Manual approval required before proceeding to deployment."
-      - name: Publish Results
-        uses: cloudbees-io/publish-evidence-item@v1
+      - uses: cloudbees-io/publish-evidence-item@v1
+        name: Publish Results
         with:
           content: |-
             ## Exit Gates Results
             ${{vars.PETCLINIC_DEV_EXIT_GATE}} 
           format: MARKDOWN
+      - uses: docker://maven:3-eclipse-temurin-17
+        name: Manual Approval
+        run: |
+          echo "Manual approval required before proceeding to deployment."
     needs:
       - Deploy_Development
   SmokeTest_Dev:
@@ -197,8 +188,7 @@ jobs:
       - name: Publish Results
         uses: cloudbees-io/publish-evidence-item@v1
         with:
-          content: |-
-            ${{vars.PETCLINIC_SMOKETEST_DEV_RESULTS}} 
+          content: "${{vars.PETCLINIC_SMOKETEST_DEV_RESULTS}} "
           format: MARKDOWN
     needs:
       - Deploy_Development
@@ -245,9 +235,8 @@ jobs:
       - name: Publish Results
         uses: cloudbees-io/publish-evidence-item@v1
         with:
-          content: |-
-            ${{vars.PETCLINIC_SMOKETEST_QA_RESULTS}} 
-          format: MARKDOWN          
+          content: "${{vars.PETCLINIC_SMOKETEST_QA_RESULTS}} "
+          format: MARKDOWN
     needs:
       - Deploy_QA
   Deploy_Prod:
@@ -277,10 +266,7 @@ jobs:
       - name: Publish Results
         uses: cloudbees-io/publish-evidence-item@v1
         with:
-          content: |-
-            ${{vars.PETCLINIC_SMOKETEST_PROD_RESULTS}} 
-          format: MARKDOWN          
+          content: "${{vars.PETCLINIC_SMOKETEST_PROD_RESULTS}} "
+          format: MARKDOWN
     needs:
       - Deploy_Prod
-
-
