@@ -104,7 +104,7 @@ jobs:
             ## Code Coverage Report
             ${{vars.PETCLINIC_UT_RESULTS}} 
           format: MARKDOWN
-  StaticAnalysis:
+  static-analysis:
     outputs:
       BLOCKER_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.BLOCKER_COUNT }}
       CRITICAL_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.CRITICAL_COUNT }}
@@ -239,5 +239,5 @@ jobs:
           format: MARKDOWN
     needs:
       - build
-      - scan
+      - static-analysis
 
