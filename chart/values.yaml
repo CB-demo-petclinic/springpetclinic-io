@@ -1,5 +1,5 @@
 image:
-  repository: ldonleycb/hackers-organized
+  repository: caannamalai/springpetclinic
   tag: stable
   pullPolicy: Always
 
