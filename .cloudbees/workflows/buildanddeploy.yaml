@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 jobs:
   Build:
     outputs:
@@ -100,6 +101,7 @@ jobs:
     steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
+
       - name: Scan with Find Security Bugs
         uses: cloudbees-io/findsecbugs-sast-scan-code@v1
         with:
@@ -206,67 +208,4 @@ jobs:
         kind: deploy
         with:
           kustomization-base-dir: ${{ cloudbees.workspace }}/base
-    needs:
-      - Build
-  Deploy_QA:
-    environment: snaqvi_QA
-    steps:
-      - uses: cloudbees-io/checkout@v1
-        name: Checkout
-      - uses: cashokannamalai/kubeconfig@v1
-        name: Set kubeconfig
-        with:
-          secname: ${{ secrets.kubeconfig }}
-      - uses: cloudbees-io/kustomize-deploy@v1
-        name: deploy
-        kind: deploy
-        with:
-          kustomization-base-dir: ${{ cloudbees.workspace }}/base
-    needs:
-      - Exit_Gate
-  SmokeTest_QA:
-    steps:
-      - uses: cloudbees-io/checkout@v1
-        name: Checkout
-      - uses: docker://maven:3-eclipse-temurin-17
-        name: Smoke Test
-        run: |
-          mvn test
-      - name: Publish Results
-        uses: cloudbees-io/publish-evidence-item@v1
-        with:
-          content: "${{vars.PETCLINIC_SMOKETEST_QA_RESULTS}} "
-          format: MARKDOWN
-    needs:
-      - Deploy_QA
-  Deploy_Prod:
-    environment: snaqvi_PROD
-    steps:
-      - uses: cloudbees-io/checkout@v1
-        name: Checkout
-      - uses: cashokannamalai/kubeconfig@v1
-        name: Set kubeconfig
-        with:
-          secname: ${{ secrets.kubeconfig }}
-      - uses: cloudbees-io/kustomize-deploy@v1
-        name: deploy
-        kind: deploy
-        with:
-          kustomization-base-dir: ${{ cloudbees.workspace }}/base
-    needs:
-      - Deploy_QA
-  SmokeTest_Prod:
-    steps:
-      - uses: cloudbees-io/checkout@v1
-        name: Checkout
-      - uses: docker://maven:3-eclipse-temurin-17
-        name: Smoke Test
-        run: |
-          mvn test
-      - name: Publish Results
-        uses: cloudbees-io/publish-evidence-item@v1
-        with:
-          content: "${{vars.PETCLINIC_SMOKETEST_PROD_RESULTS}} "
-          format: MARKDOWN
-    needs:
-      - Deploy_Prod
+
