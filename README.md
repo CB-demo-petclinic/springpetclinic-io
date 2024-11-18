@@ -306,7 +306,6 @@ conditions:
     # Optional - Based on operator  (is-undefined, is-true, is-false)
     operand: String|Number|[String]
 ```
-
 # See Also:
 - Using Roxy docker image for Microservices Automated Testing and Local development [here](https://support.rollout.io/docs/microservices-automated-testing-and-local-development)
 - Configuration as Code advantages [here](https://support.rollout.io/docs/configuration-as-code#section-advantages-of-configuration-as-code)
