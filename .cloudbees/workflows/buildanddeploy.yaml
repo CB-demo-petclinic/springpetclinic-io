@@ -4,7 +4,7 @@ name: Flag_deployement
 on:
   push:
     branches:
-      - *
+      - "**"
   workflow_dispatch:
 env:
   APP_NAME: spring-petclinic
