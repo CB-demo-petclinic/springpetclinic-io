@@ -233,9 +233,9 @@ jobs:
         with:
           content: |-
             ## Deployed environment
-            [Production frontend](https://snaqvi-petclinic-dev.preview.cb-demos.io/)
+            [Dev frontend](https://snaqvi-petclinic-dev.preview.cb-demos.io/)
 
-            Running hackers-organized:${{ cloudbees.scm.sha }}
+            Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
     needs:
       - build
@@ -266,9 +266,9 @@ jobs:
         with:
           content: |-
             ## Deployed environment
-            [Production frontend](https://snaqvi-petclinic-qa.preview.cb-demos.io/)
+            [QA frontend](https://snaqvi-petclinic-qa.preview.cb-demos.io/)
 
-            Running hackers-organized:${{ cloudbees.scm.sha }}
+            Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
     needs:
       - exit_gate
@@ -315,7 +315,7 @@ jobs:
             ## Deployed environment
             [Production frontend](https://snaqvi-petclinic-prod.preview.cb-demos.io/)
 
-            Running hackers-organized:${{ cloudbees.scm.sha }}
+            Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
     needs:
       - deploy_qa
