@@ -9,6 +9,7 @@ on:
 env:
   APP_NAME: spring-petclinic
   NAMESPACE: snaqvi
+
 jobs:
   build:
     outputs:
@@ -113,7 +114,6 @@ jobs:
     steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
-
       - name: Scan with Find Security Bugs
         uses: cloudbees-io/findsecbugs-sast-scan-code@v1
         with:
