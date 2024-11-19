@@ -242,7 +242,7 @@ jobs:
       - static-analysis
   deploy_qa:
     environment: snaqvi_QA
-     steps:
+    steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
       - uses: cashokannamalai/kubeconfig@v1
@@ -289,7 +289,7 @@ jobs:
       - deploy_qa
   deploy_prod:
     environment: snaqvi_PROD
-     steps:
+    steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
       - uses: cashokannamalai/kubeconfig@v1
