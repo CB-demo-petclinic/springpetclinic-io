@@ -206,7 +206,6 @@ jobs:
           format: MARKDOWN
     needs:
       - deploy_dev
-  
   deploy_dev:
     environment: snaqvi_DEV
     steps:
