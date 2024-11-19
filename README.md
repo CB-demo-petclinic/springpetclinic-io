@@ -27,7 +27,7 @@ Every environment on Rollout dashboard is mapped to a branch in git. The same na
 
 Rollout repository integration creates the following directory structure:
 ```
-.
+. 
 ├── experiments             # Experiments definitions
 │   └──  archived           # Archived experiments definitions
 ├── target_groups           # Target groups definitions
