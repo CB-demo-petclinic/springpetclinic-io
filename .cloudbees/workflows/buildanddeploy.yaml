@@ -1,6 +1,6 @@
 apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
-name: Flag_deployement
+name: feature_flag_deployment
 on:
   push:
     branches:
@@ -175,7 +175,7 @@ jobs:
             | MAJOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MAJOR_COUNT }} |
             | MINOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }} |
           format: MARKDOWN
-  Exit_Gate:
+  exit_gate:
     environment: snaqvi_DEV
     steps:
       - uses: cloudbees-io/publish-evidence-item@v1
@@ -190,8 +190,8 @@ jobs:
         run: |
           echo "Manual approval required before proceeding to deployment."
     needs:
-      - deploy
-  SmokeTest_Dev:
+      - deploy_dev
+  smokeTest_dev:
     steps:
       - uses: cloudbees-io/checkout@v1
         name: Checkout
@@ -205,9 +205,9 @@ jobs:
           content: "${{vars.PETCLINIC_SMOKETEST_DEV_RESULTS}} "
           format: MARKDOWN
     needs:
-      - deploy
+      - deploy_dev
   
-  deploy:
+  deploy_dev:
     environment: snaqvi_DEV
     steps:
       - name: Checkout
@@ -227,17 +227,111 @@ jobs:
             image:
               tag: ${{ cloudbees.scm.sha }}
             fmKey: ${{ secrets.FM_TOKEN }}
-            hostname: snaqvi-petclinic-staging.preview.cb-demos.io
+            hostname: snaqvi-petclinic-dev.preview.cb-demos.io
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
           content: |-
             ## Deployed environment
-            [Production frontend](https://snaqvi-petclinic-staging.preview.cb-demos.io/)
+            [Production frontend](https://snaqvi-petclinic-dev.preview.cb-demos.io/)
 
             Running hackers-organized:${{ cloudbees.scm.sha }}
           format: MARKDOWN
     needs:
       - build
       - static-analysis
+  deploy_qa:
+    environment: snaqvi_QA
+     steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
+      - uses: cashokannamalai/kubeconfig@v1
+        name: Set kubeconfig
+        with:
+          secname: ${{ secrets.kubeconfig }}
+      - id: install-chart
+        name: Install helm chart
+        uses: cloudbees-io/helm-install@v1
+        with:
+          chart-location: ${{ cloudbees.workspace }}/chart
+          release-name: ${{ env.APP_NAME }}
+          namespace: ${{ env.NAMESPACE }}
+          values: |
+            image:
+              tag: ${{ cloudbees.scm.sha }}
+            fmKey: ${{ secrets.FM_TOKEN }}
+            hostname: snaqvi-petclinic-qa.preview.cb-demos.io
+      - name: Publish evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## Deployed environment
+            [Production frontend](https://snaqvi-petclinic-qa.preview.cb-demos.io/)
+
+            Running hackers-organized:${{ cloudbees.scm.sha }}
+          format: MARKDOWN
+    needs:
+      - exit_gate
+  smokeTest_qa:
+    steps:
+      - uses: cloudbees-io/checkout@v1
+        name: Checkout
+      - uses: docker://maven:3-eclipse-temurin-17
+        name: Smoke Test
+        run: |
+          mvn test
+      - name: Publish Results
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: "${{vars.PETCLINIC_SMOKETEST_QA_RESULTS}} "
+          format: MARKDOWN
+    needs:
+      - deploy_qa
+  deploy_prod:
+    environment: snaqvi_PROD
+     steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
+      - uses: cashokannamalai/kubeconfig@v1
+        name: Set kubeconfig
+        with:
+          secname: ${{ secrets.kubeconfig }}
+      - id: install-chart
+        name: Install helm chart
+        uses: cloudbees-io/helm-install@v1
+        with:
+          chart-location: ${{ cloudbees.workspace }}/chart
+          release-name: ${{ env.APP_NAME }}
+          namespace: ${{ env.NAMESPACE }}
+          values: |
+            image:
+              tag: ${{ cloudbees.scm.sha }}
+            fmKey: ${{ secrets.FM_TOKEN }}
+            hostname: snaqvi-petclinic-prod.preview.cb-demos.io
+      - name: Publish evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## Deployed environment
+            [Production frontend](https://snaqvi-petclinic-prod.preview.cb-demos.io/)
+
+            Running hackers-organized:${{ cloudbees.scm.sha }}
+          format: MARKDOWN
+    needs:
+      - deploy_qa
+  smokeTest_prod:
+    steps:
+      - uses: cloudbees-io/checkout@v1
+        name: Checkout
+      - uses: docker://maven:3-eclipse-temurin-17
+        name: Smoke Test
+        run: |
+          mvn test
+      - name: Publish Results
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: "${{vars.PETCLINIC_SMOKETEST_PROD_RESULTS}} "
+          format: MARKDOWN
+    needs:
+      - deploy_prod
 
