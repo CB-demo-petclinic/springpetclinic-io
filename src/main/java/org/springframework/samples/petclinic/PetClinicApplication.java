@@ -51,17 +51,14 @@ public class PetClinicApplication {
 		// Register the flags container under a namespace
 		Rox.register("default", flags);
 
-		// Setup connection with the feature management environment key
-		// Rox.setup("aa61857a-0ca1-4e9d-4616-55e416873ce4").get();
-
 		String roxId = System.getenv("VUE_APP_FM_KEY");
 		if (roxId == null || roxId.isEmpty()) {
-			//throw new IllegalArgumentException("Environment variable ROX_ID is not set");
 			System.out.printf("Environment variable ROX_ID is not set");
-		} else {
-			Rox.setup(roxId).get(); 
 		}
 
+		else {
+			Rox.setup(roxId).get();
+		}
 
 		// Prints the value of the boolean enableTutorial flag
 		if (flags.enableTutorial.isEnabled()) {
