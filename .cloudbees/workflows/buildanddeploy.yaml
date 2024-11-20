@@ -332,4 +332,4 @@ jobs:
           content: "${{vars.PETCLINIC_SMOKETEST_PROD_RESULTS}} "
           format: MARKDOWN
     needs:
-      - deploy_prod
+      - deploy_prod 
