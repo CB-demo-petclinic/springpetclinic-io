@@ -59,7 +59,7 @@ public class PetClinicApplication {
 			//throw new IllegalArgumentException("Environment variable ROX_ID is not set");
 			System.out.printf("Environment variable ROX_ID is not set");
 		} else {
-			Rox.setup(roxId).get();
+			Rox.setup(roxId).get(); 
 		}
 
 
