@@ -56,9 +56,12 @@ public class PetClinicApplication {
 
 		String roxId = System.getenv("VUE_APP_FM_KEY");
 		if (roxId == null || roxId.isEmpty()) {
-			throw new IllegalArgumentException("Environment variable ROX_ID is not set");
+			//throw new IllegalArgumentException("Environment variable ROX_ID is not set");
+			System.out.printf("Environment variable ROX_ID is not set");
+		} else {
+			Rox.setup(roxId).get();
 		}
-		Rox.setup(roxId).get();
+
 
 		// Prints the value of the boolean enableTutorial flag
 		if (flags.enableTutorial.isEnabled()) {
