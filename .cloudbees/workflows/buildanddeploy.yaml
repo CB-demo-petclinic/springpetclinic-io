@@ -17,6 +17,9 @@ jobs:
       commit_id: ${{ steps.commitinfo.outputs.commit_id }}
       commit_msg: ${{ steps.commitinfo.outputs.commit_msg }}
       jira_key: ${{ steps.commitinfo.outputs.jira_key }}
+    artifacts:
+      - path: /cloudbees/workspace/target/*.jar
+        name: Application Artifact
     steps:
       - name: Configure git
         uses: docker://alpine/git:latest
