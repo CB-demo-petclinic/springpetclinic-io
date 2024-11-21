@@ -246,7 +246,7 @@ jobs:
         with:
           content: |-
             ## Deployed environment
-            [Dev frontend](https://snaqvi-petclinic-dev.preview.cb-demos.io/)
+            [Dev frontend](https://${{ env.NAMESPACE }}-petclinic-dev.preview.cb-demos.io/)
 
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
@@ -273,13 +273,13 @@ jobs:
               repository: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/spring-petclinic
               tag: ${{ cloudbees.scm.sha }}
             fmKey: ${{ secrets.FM_TOKEN }}
-            hostname: snaqvi-petclinic-qa.preview.cb-demos.io
+            hostname: ${{ env.NAMESPACE }}-petclinic-qa.preview.cb-demos.io
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
           content: |-
             ## Deployed environment
-            [QA frontend](https://snaqvi-petclinic-qa.preview.cb-demos.io/)
+            [QA frontend](https://${{ env.NAMESPACE }}-petclinic-qa.preview.cb-demos.io/)
 
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
@@ -319,13 +319,13 @@ jobs:
               repository: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/spring-petclinic
               tag: ${{ cloudbees.scm.sha }}
             fmKey: ${{ secrets.FM_TOKEN }}
-            hostname: snaqvi-petclinic-prod.preview.cb-demos.io
+            hostname: ${{ env.NAMESPACE }}-petclinic-prod.preview.cb-demos.io
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
           content: |-
             ## Deployed environment
-            [Production frontend](https://snaqvi-petclinic-prod.preview.cb-demos.io/)
+            [Production frontend](https://${{ env.NAMESPACE }}-petclinic-prod.preview.cb-demos.io/)
 
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
