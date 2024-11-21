@@ -169,7 +169,7 @@ jobs:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
       - uses: cloudbees-io/snyk-sast-scan-code@v1
-        name: scan1
+        name: Scan with Snyk SAST
         kind: scan
         with:
           orgname: ${{ secrets.SNYK_ORGNAME }}
