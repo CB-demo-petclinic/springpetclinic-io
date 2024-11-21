@@ -201,6 +201,12 @@ jobs:
           orgname: ${{ secrets.SNYK_ORGNAME }}
           token: ${{ secrets.SNYK_TOKEN }}
           language: LANGUAGE_JAVA
+      - name: Publish evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ${{vars.PETCLINIC_SCA_SCAN_RESULTS}} 
+          format: MARKDOWN                  
   exit_gate:
     environment: snaqvi_DEV
     steps:
