@@ -9,6 +9,7 @@ on:
 env:
   APP_NAME: spring-petclinic
   NAMESPACE: snaqvi
+  ENVIRONMENT: snaqvi
 jobs:
   evidence-collection:
     outputs:
@@ -220,7 +221,7 @@ jobs:
           format: MARKDOWN
     needs: deploy_dev
   deploy_dev:
-    environment: snaqvi_DEV
+    environment: ${{ env.ENVIRONMENT }}_DEV
     steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
@@ -240,7 +241,7 @@ jobs:
               repository: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/spring-petclinic
               tag: ${{ cloudbees.scm.sha }}
             fmKey: ${{ secrets.FM_TOKEN }}
-            hostname: snaqvi-petclinic-dev.preview.cb-demos.io
+            hostname: ${{ env.NAMESPACE }}-petclinic-dev.preview.cb-demos.io
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:

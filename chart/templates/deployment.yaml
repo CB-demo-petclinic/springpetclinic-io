@@ -20,7 +20,7 @@ spec:
           image: {{ .Values.image.repository}}:{{.Values.image.tag}}
           imagePullPolicy: {{.Values.image.pullPolicy}}
           env:
-            - name: VUE_APP_FM_KEY
+            - name: SPRING_APP_FM_KEY
               value: {{ .Values.fmKey }}
           ports:
             - containerPort: 8080

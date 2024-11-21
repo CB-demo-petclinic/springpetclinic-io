@@ -51,7 +51,7 @@ public class PetClinicApplication {
 		// Register the flags container under a namespace
 		Rox.register("default", flags);
 
-		String roxId = System.getenv("VUE_APP_FM_KEY");
+		String roxId = System.getenv("SPRING_APP_FM_KEY");
 		if (roxId == null || roxId.isEmpty()) {
 			System.out.printf("Environment variable ROX_ID is not set");
 		}
