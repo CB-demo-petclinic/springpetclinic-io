@@ -124,6 +124,7 @@ jobs:
           sonar-scanner \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
             -Dsonar.sources=/cloudbees/workspace \
+            -Dsonar.java.binaries= \
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
       - name: Fetch SonarQube Issues
