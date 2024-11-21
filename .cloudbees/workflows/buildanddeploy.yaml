@@ -13,7 +13,6 @@ env:
 jobs:
   compile:
     outputs:
-      unitTestResults: ${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}
       commit_id: ${{ steps.commitinfo.outputs.commit_id }}
       commit_msg: ${{ steps.commitinfo.outputs.commit_msg }}
       jira_key: ${{ steps.commitinfo.outputs.jira_key }}
@@ -56,13 +55,11 @@ jobs:
             - **JIRA Issue Key:** "${{ steps.commitinfo.outputs.jira_key }}"
             ## Commit Information
             - **Commit ID:** "${{ steps.commitinfo.outputs.commit_id }}"
-            - **Commit Message:** "${{ steps.commitinfo.outputs.commit_msg }}"
-            ## Unit Test Results
-            - **Unit Test Results:** "${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}"
-            ## Code Coverage Report
-            ${{vars.PETCLINIC_UT_RESULTS}} 
+            - **Commit Message:** "${{ steps.commitinfo.outputs.commit_msg }}" 
           format: MARKDOWN
   unit-tests:
+    outputs:
+      unitTestResults: ${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}
     steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
@@ -82,11 +79,6 @@ jobs:
         uses: cloudbees-io/publish-evidence-item@v1
         with:
           content: |-
-            ## JIRA Information
-            - **JIRA Issue Key:** "${{ steps.commitinfo.outputs.jira_key }}"
-            ## Commit Information
-            - **Commit ID:** "${{ steps.commitinfo.outputs.commit_id }}"
-            - **Commit Message:** "${{ steps.commitinfo.outputs.commit_msg }}"
             ## Unit Test Results
             - **Unit Test Results:** "${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}"
             ## Code Coverage Report
