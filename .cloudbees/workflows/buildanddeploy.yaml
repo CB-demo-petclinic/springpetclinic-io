@@ -46,6 +46,15 @@ jobs:
           mvn spring-javaformat:apply
           mvn clean install
         shell: sh
+      - name: SonarQube analysis
+        uses: docker://sonarsource/sonar-scanner-cli:latest
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
+            -Dsonar.sources=/cloudbees/workspace \
+            -Dsonar.java.binaries=/cloudbees/workspace/target/classes \
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
@@ -118,14 +127,6 @@ jobs:
         uses: cloudbees-io/findsecbugs-sast-scan-code@v1
         with:
           language: LANGUAGE_JAVA
-      - name: SonarQube analysis
-        uses: docker://sonarsource/sonar-scanner-cli:latest
-        run: |
-          sonar-scanner \
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
-            -Dsonar.exclusions="**/target/**,**/build/**,**/*.java" \
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
       - name: Fetch SonarQube Issues
         id: FetchSonarQubeIssues
         uses: docker://alpine/git:latest
