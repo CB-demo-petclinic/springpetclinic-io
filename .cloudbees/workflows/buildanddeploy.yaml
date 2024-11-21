@@ -9,7 +9,6 @@ on:
 env:
   APP_NAME: spring-petclinic
   NAMESPACE: snaqvi
-  ENVIRONMENT: snaqvi
 jobs:
   evidence-collection:
     outputs:
@@ -221,7 +220,7 @@ jobs:
           format: MARKDOWN
     needs: deploy_dev
   deploy_dev:
-    environment: ${{ env.ENVIRONMENT }}_DEV
+    environment: snaqvi_DEV
     steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
