@@ -11,7 +11,7 @@ env:
   NAMESPACE: snaqvi
 
 jobs:
-  build:
+  compile:
     outputs:
       unitTestResults: ${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}
       commit_id: ${{ steps.commitinfo.outputs.commit_id }}
@@ -48,21 +48,38 @@ jobs:
           mvn spring-javaformat:apply
           mvn clean install
         shell: sh
+  unit-tests:
+    steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
       - name: RunUnitTest
         id: RunUnitTest
         uses: docker://maven:3-eclipse-temurin-17
         run: |
           mvn test > "$CLOUDBEES_OUTPUTS/mvn_test_stdio"
           cat "$CLOUDBEES_OUTPUTS/mvn_test_stdio" | grep "Tests run:" | tail -1 > "$CLOUDBEES_OUTPUTS/mvn_test_stdio1"
-      - name: SonarQube analysis
-        uses: docker://sonarsource/sonar-scanner-cli:latest
-        run: |
-          sonar-scanner \
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
-            -Dsonar.sources=/cloudbees/workspace \
-            -Dsonar.java.binaries=/cloudbees/workspace/target/classes \
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+      - uses: cloudbees-io/publish-test-results@v1
+        name: test
+        kind: test
+        with:
+          test-type: JUnit
+          folder-name: /cloudbees/workspace/target/surefire-reports/*.xml
+      - name: Publish evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## JIRA Information
+            - **JIRA Issue Key:** "${{ steps.commitinfo.outputs.jira_key }}"
+            ## Commit Information
+            - **Commit ID:** "${{ steps.commitinfo.outputs.commit_id }}"
+            - **Commit Message:** "${{ steps.commitinfo.outputs.commit_msg }}"
+            ## Unit Test Results
+            - **Unit Test Results:** "${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}"
+            ## Code Coverage Report
+            ${{vars.PETCLINIC_UT_RESULTS}} 
+          format: MARKDOWN
+  package:
+    steps:
       - name: Configure container registry credentials
         id: dockerconfig
         uses: cloudbees-io/configure-oci-credentials@v1
@@ -85,26 +102,6 @@ jobs:
       #     file-path: container-image.tar
       #     file-type: BINARY_CONTAINER
       #     debug: "true"
-      - uses: cloudbees-io/publish-test-results@v1
-        name: test
-        kind: test
-        with:
-          test-type: JUnit
-          folder-name: /cloudbees/workspace/target/surefire-reports/*.xml
-      - name: Publish evidence
-        uses: cloudbees-io/publish-evidence-item@v1
-        with:
-          content: |-
-            ## JIRA Information
-            - **JIRA Issue Key:** "${{ steps.commitinfo.outputs.jira_key }}"
-            ## Commit Information
-            - **Commit ID:** "${{ steps.commitinfo.outputs.commit_id }}"
-            - **Commit Message:** "${{ steps.commitinfo.outputs.commit_msg }}"
-            ## Unit Test Results
-            - **Unit Test Results:** "${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}"
-            ## Code Coverage Report
-            ${{vars.PETCLINIC_UT_RESULTS}} 
-          format: MARKDOWN
   static-analysis:
     outputs:
       BLOCKER_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.BLOCKER_COUNT }}
@@ -118,33 +115,15 @@ jobs:
         uses: cloudbees-io/findsecbugs-sast-scan-code@v1
         with:
           language: LANGUAGE_JAVA
-      - name: Scan with SonarQube bundled
-        uses: cloudbees-io/sonarqube-bundled-sast-scan-code@v1
-        with:
-          sonar-exclusion: src/main/java
-          cover-file-name: ./pom.xml
-          language: LANGUAGE_JAVA
-      - name: Scan with Snyk Container
-        uses: cloudbees-io/snyk-scan-container@v1
-        with:
-          orgname: ashok.alogicfocus
-          token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
-          image-location: caannamalai/springpetclinic
-          image-tag: 3.2.4
-      - uses: cloudbees-io/snyk-sast-scan-code@v1
-        name: scan1
-        kind: scan
-        with:
-          orgname: ashok.alogicfocus
-          token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
-          language: LANGUAGE_JAVA
-      - uses: cloudbees-io/snyk-sca-scan-dependency@v1
-        name: Scan with Snyk SCA
-        kind: scan
-        with:
-          orgname: ashok.alogicfocus
-          token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
-          language: LANGUAGE_JAVA
+      - name: SonarQube analysis
+        uses: docker://sonarsource/sonar-scanner-cli:latest
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
+            -Dsonar.sources=/cloudbees/workspace \
+            -Dsonar.java.binaries=/cloudbees/workspace/target/classes \
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
       - name: Fetch SonarQube Issues
         id: FetchSonarQubeIssues
         uses: docker://alpine/git:latest
@@ -175,6 +154,34 @@ jobs:
             | MAJOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MAJOR_COUNT }} |
             | MINOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }} |
           format: MARKDOWN
+  container-scan:
+      - name: Scan with Snyk Container
+        uses: cloudbees-io/snyk-scan-container@v1
+        with:
+          orgname: ashok.alogicfocus
+          token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
+          image-location: caannamalai/springpetclinic
+          image-tag: ${{ cloudbees.scm.sha }}
+  sast-scan:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
+      - uses: cloudbees-io/snyk-sast-scan-code@v1
+        name: scan1
+        kind: scan
+        with:
+          orgname: ashok.alogicfocus
+          token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
+          language: LANGUAGE_JAVA
+  sca-scan:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
+      - uses: cloudbees-io/snyk-sca-scan-dependency@v1
+        name: Scan with Snyk SCA
+        kind: scan
+        with:
+          orgname: ashok.alogicfocus
+          token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
+          language: LANGUAGE_JAVA
   exit_gate:
     environment: snaqvi_DEV
     steps:
