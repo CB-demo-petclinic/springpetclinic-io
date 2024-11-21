@@ -245,6 +245,7 @@ jobs:
           namespace: ${{ env.NAMESPACE }}-dev
           values: |
             image:
+              repository: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/spring-petclinic
               tag: ${{ cloudbees.scm.sha }}
             fmKey: ${{ secrets.FM_TOKEN }}
             hostname: snaqvi-petclinic-dev.preview.cb-demos.io
@@ -277,6 +278,7 @@ jobs:
           namespace: ${{ env.NAMESPACE }}-qa
           values: |
             image:
+              repository: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/spring-petclinic
               tag: ${{ cloudbees.scm.sha }}
             fmKey: ${{ secrets.FM_TOKEN }}
             hostname: snaqvi-petclinic-qa.preview.cb-demos.io
@@ -322,6 +324,7 @@ jobs:
           namespace: ${{ env.NAMESPACE }}-prod
           values: |
             image:
+              repository: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/spring-petclinic
               tag: ${{ cloudbees.scm.sha }}
             fmKey: ${{ secrets.FM_TOKEN }}
             hostname: snaqvi-petclinic-prod.preview.cb-demos.io
