@@ -48,6 +48,20 @@ jobs:
           mvn spring-javaformat:apply
           mvn clean install
         shell: sh
+      - name: Publish evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## JIRA Information
+            - **JIRA Issue Key:** "${{ steps.commitinfo.outputs.jira_key }}"
+            ## Commit Information
+            - **Commit ID:** "${{ steps.commitinfo.outputs.commit_id }}"
+            - **Commit Message:** "${{ steps.commitinfo.outputs.commit_msg }}"
+            ## Unit Test Results
+            - **Unit Test Results:** "${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}"
+            ## Code Coverage Report
+            ${{vars.PETCLINIC_UT_RESULTS}} 
+          format: MARKDOWN
   unit-tests:
     steps:
       - name: Checkout
