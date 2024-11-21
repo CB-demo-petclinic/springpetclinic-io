@@ -171,9 +171,9 @@ jobs:
       - name: Scan with Snyk Container
         uses: cloudbees-io/snyk-scan-container@v1
         with:
-          orgname: ashok.alogicfocus
-          token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
-          image-location: caannamalai/springpetclinic
+          orgname: ${{ secrets.SNYK_ORGNAME }}
+          token: ${{ secrets.SNYK_TOKEN }}
+          image-location: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/${{ secrets.DOCKERHUB_STAGE_REPO }}
           image-tag: ${{ cloudbees.scm.sha }}
     needs: package
   sast-scan:
@@ -184,8 +184,8 @@ jobs:
         name: scan1
         kind: scan
         with:
-          orgname: ashok.alogicfocus
-          token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
+          orgname: ${{ secrets.SNYK_ORGNAME }}
+          token: ${{ secrets.SNYK_TOKEN }}
           language: LANGUAGE_JAVA
   sca-scan:
     steps:
@@ -195,8 +195,8 @@ jobs:
         name: Scan with Snyk SCA
         kind: scan
         with:
-          orgname: ashok.alogicfocus
-          token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
+          orgname: ${{ secrets.SNYK_ORGNAME }}
+          token: ${{ secrets.SNYK_TOKEN }}
           language: LANGUAGE_JAVA
   exit_gate:
     environment: snaqvi_DEV
