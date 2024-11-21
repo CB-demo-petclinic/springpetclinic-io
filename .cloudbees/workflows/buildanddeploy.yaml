@@ -94,6 +94,8 @@ jobs:
           format: MARKDOWN
   package:
     steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
       - name: Configure container registry credentials
         id: dockerconfig
         uses: cloudbees-io/configure-oci-credentials@v1
@@ -120,8 +122,6 @@ jobs:
       MAJOR_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.MAJOR_COUNT }}
       MINOR_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }}
     steps:
-      - name: Checkout
-        uses: cloudbees-io/checkout@v1
       - name: Scan with Find Security Bugs
         uses: cloudbees-io/findsecbugs-sast-scan-code@v1
         with:
