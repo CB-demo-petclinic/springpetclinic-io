@@ -10,14 +10,11 @@ env:
   APP_NAME: spring-petclinic
   NAMESPACE: snaqvi
 jobs:
-  compile:
+  evidence-collection:
     outputs:
       commit_id: ${{ steps.commitinfo.outputs.commit_id }}
       commit_msg: ${{ steps.commitinfo.outputs.commit_msg }}
       jira_key: ${{ steps.commitinfo.outputs.jira_key }}
-    artifacts:
-      - path: /cloudbees/workspace/target/*.jar
-        name: Application Artifact
     steps:
       - name: Configure git
         uses: docker://alpine/git:latest
@@ -42,22 +39,6 @@ jobs:
           echo "${COMMIT_ID}" >> $CLOUDBEES_OUTPUTS/commit_id
           echo "${COMMIT_MSG}" >> $CLOUDBEES_OUTPUTS/commit_msg
           echo "${JIRA_KEY}" >> $CLOUDBEES_OUTPUTS/jira_key
-      - uses: docker://maven:3-eclipse-temurin-17
-        name: Build
-        kind: build
-        run: |
-          mvn spring-javaformat:apply
-          mvn clean install
-        shell: sh
-      - name: SonarQube analysis
-        uses: docker://sonarsource/sonar-scanner-cli:latest
-        run: |
-          sonar-scanner \
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
-            -Dsonar.sources=/cloudbees/workspace \
-            -Dsonar.java.binaries=/cloudbees/workspace/target/classes \
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
@@ -133,6 +114,8 @@ jobs:
       MAJOR_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.MAJOR_COUNT }}
       MINOR_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }}
     steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
       - name: Scan with Find Security Bugs
         uses: cloudbees-io/findsecbugs-sast-scan-code@v1
         with:
@@ -168,7 +151,7 @@ jobs:
             | MINOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }} |
           format: MARKDOWN
     needs:
-      - compile
+      - evidence-collection
   container-scan:
     steps:
       - name: Scan with Snyk Container
