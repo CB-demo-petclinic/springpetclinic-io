@@ -9,11 +9,9 @@ on:
 env:
   APP_NAME: spring-petclinic
   NAMESPACE: snaqvi
-
 jobs:
-  build:
+  compile:
     outputs:
-      unitTestResults: ${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}
       commit_id: ${{ steps.commitinfo.outputs.commit_id }}
       commit_msg: ${{ steps.commitinfo.outputs.commit_msg }}
       jira_key: ${{ steps.commitinfo.outputs.jira_key }}
@@ -51,12 +49,6 @@ jobs:
           mvn spring-javaformat:apply
           mvn clean install
         shell: sh
-      - name: RunUnitTest
-        id: RunUnitTest
-        uses: docker://maven:3-eclipse-temurin-17
-        run: |
-          mvn test > "$CLOUDBEES_OUTPUTS/mvn_test_stdio"
-          cat "$CLOUDBEES_OUTPUTS/mvn_test_stdio" | grep "Tests run:" | tail -1 > "$CLOUDBEES_OUTPUTS/mvn_test_stdio1"
       - name: SonarQube analysis
         uses: docker://sonarsource/sonar-scanner-cli:latest
         run: |
@@ -66,28 +58,28 @@ jobs:
             -Dsonar.java.binaries=/cloudbees/workspace/target/classes \
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-      - name: Configure container registry credentials
-        id: dockerconfig
-        uses: cloudbees-io/configure-oci-credentials@v1
+      - name: Publish evidence
+        uses: cloudbees-io/publish-evidence-item@v1
         with:
-          registry: ${{ secrets.STAGING_DOCKER_REGISTRY }}
-          username: ${{ secrets.STAGING_DOCKER_USERNAME }}
-          password: ${{ secrets.STAGING_DOCKER_PASSWORD }}
-      - uses: cloudbees-io/kaniko@v1
-        name: Build and push docker image
-        kind: build
-        with:
-          destination: ${{ secrets.STAGING_DOCKER_REGISTRY }}/${{ secrets.STAGING_DOCKER_USERNAME }}/springpetclinic:${{ cloudbees.scm.sha }},${{ secrets.STAGING_DOCKER_REGISTRY }}/${{ secrets.STAGING_DOCKER_USERNAME }}/springpetclinic:latest
-          tar-path: container-image.tar
-          build-args: BUILDKIT_CONTEXT_KEEP_GIT_DIR=1,BUILDKIT_INLINE_CACHE=1
-      # - uses: calculi-corp/assets-plugin-chain-utils/upload-binary@v1
-      #   name: Upload binary from container build
-      #   continue-on-error: true
-      #   id: upload-binary
-      #   with:
-      #     file-path: container-image.tar
-      #     file-type: BINARY_CONTAINER
-      #     debug: "true"
+          content: |-
+            ## JIRA Information
+            - **JIRA Issue Key:** "${{ steps.commitinfo.outputs.jira_key }}"
+            ## Commit Information
+            - **Commit ID:** "${{ steps.commitinfo.outputs.commit_id }}"
+            - **Commit Message:** "${{ steps.commitinfo.outputs.commit_msg }}" 
+          format: MARKDOWN
+  unit-tests:
+    outputs:
+      unitTestResults: ${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}
+    steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
+      - name: RunUnitTest
+        id: RunUnitTest
+        uses: docker://maven:3-eclipse-temurin-17
+        run: |
+          mvn test > "$CLOUDBEES_OUTPUTS/mvn_test_stdio"
+          cat "$CLOUDBEES_OUTPUTS/mvn_test_stdio" | grep "Tests run:" | tail -1 > "$CLOUDBEES_OUTPUTS/mvn_test_stdio1"
       - uses: cloudbees-io/publish-test-results@v1
         name: test
         kind: test
@@ -98,16 +90,42 @@ jobs:
         uses: cloudbees-io/publish-evidence-item@v1
         with:
           content: |-
-            ## JIRA Information
-            - **JIRA Issue Key:** "${{ steps.commitinfo.outputs.jira_key }}"
-            ## Commit Information
-            - **Commit ID:** "${{ steps.commitinfo.outputs.commit_id }}"
-            - **Commit Message:** "${{ steps.commitinfo.outputs.commit_msg }}"
             ## Unit Test Results
             - **Unit Test Results:** "${{ steps.RunUnitTest.outputs.mvn_test_stdio1 }}"
             ## Code Coverage Report
             ${{vars.PETCLINIC_UT_RESULTS}} 
           format: MARKDOWN
+  package:
+    steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
+      - name: Configure container registry credentials
+        id: dockerconfig
+        uses: cloudbees-io/configure-oci-credentials@v1
+        with:
+          registry: https://index.docker.io/v1/
+          username: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_STAGE_PASSWORD }}
+      - uses: cloudbees-io/kaniko@v1
+        name: Build and push docker image
+        kind: build
+        with:
+          destination: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/spring-petclinic:${{ cloudbees.scm.sha }},${{ secrets.DOCKERHUB_STAGE_USERNAME }}/springpet-clinic:latest
+          tar-path: container-image.tar
+          build-args: BUILDKIT_CONTEXT_KEEP_GIT_DIR=1,BUILDKIT_INLINE_CACHE=1
+      # - uses: calculi-corp/assets-plugin-chain-utils/upload-binary@v1
+      #   name: Upload binary from container build
+      #   continue-on-error: true
+      #   id: upload-binary
+      #   with:
+      #     file-path: container-image.tar
+      #     file-type: BINARY_CONTAINER
+      #     debug: "true"
+    needs:
+      - static-analysis
+      - sca-scan
+      - unit-tests
+      - sast-scan
   static-analysis:
     outputs:
       BLOCKER_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.BLOCKER_COUNT }}
@@ -115,38 +133,9 @@ jobs:
       MAJOR_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.MAJOR_COUNT }}
       MINOR_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }}
     steps:
-      - name: Checkout
-        uses: cloudbees-io/checkout@v1
       - name: Scan with Find Security Bugs
         uses: cloudbees-io/findsecbugs-sast-scan-code@v1
         with:
-          language: LANGUAGE_JAVA
-      - name: Scan with SonarQube bundled
-        uses: cloudbees-io/sonarqube-bundled-sast-scan-code@v1
-        with:
-          sonar-exclusion: src/main/java
-          cover-file-name: ./pom.xml
-          language: LANGUAGE_JAVA
-      - name: Scan with Snyk Container
-        uses: cloudbees-io/snyk-scan-container@v1
-        with:
-          orgname: ashok.alogicfocus
-          token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
-          image-location: caannamalai/springpetclinic
-          image-tag: 3.2.4
-      - uses: cloudbees-io/snyk-sast-scan-code@v1
-        name: scan1
-        kind: scan
-        with:
-          orgname: ashok.alogicfocus
-          token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
-          language: LANGUAGE_JAVA
-      - uses: cloudbees-io/snyk-sca-scan-dependency@v1
-        name: Scan with Snyk SCA
-        kind: scan
-        with:
-          orgname: ashok.alogicfocus
-          token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           language: LANGUAGE_JAVA
       - name: Fetch SonarQube Issues
         id: FetchSonarQubeIssues
@@ -178,6 +167,40 @@ jobs:
             | MAJOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MAJOR_COUNT }} |
             | MINOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }} |
           format: MARKDOWN
+    needs:
+      - compile
+  container-scan:
+    steps:
+      - name: Scan with Snyk Container
+        uses: cloudbees-io/snyk-scan-container@v1
+        with:
+          orgname: ${{ secrets.SNYK_ORGNAME }}
+          token: ${{ secrets.SNYK_TOKEN }}
+          image-location: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/spring-petclinic
+          image-tag: ${{ cloudbees.scm.sha }}
+    needs: package
+  sast-scan:
+    steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
+      - uses: cloudbees-io/snyk-sast-scan-code@v1
+        name: scan1
+        kind: scan
+        with:
+          orgname: ${{ secrets.SNYK_ORGNAME }}
+          token: ${{ secrets.SNYK_TOKEN }}
+          language: LANGUAGE_JAVA
+  sca-scan:
+    steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
+      - uses: cloudbees-io/snyk-sca-scan-dependency@v1
+        name: Scan with Snyk SCA
+        kind: scan
+        with:
+          orgname: ${{ secrets.SNYK_ORGNAME }}
+          token: ${{ secrets.SNYK_TOKEN }}
+          language: LANGUAGE_JAVA
   exit_gate:
     environment: snaqvi_DEV
     steps:
@@ -192,8 +215,7 @@ jobs:
         name: Manual Approval
         run: |
           echo "Manual approval required before proceeding to deployment."
-    needs:
-      - deploy_dev
+    needs: deploy_dev
   smokeTest_dev:
     steps:
       - uses: cloudbees-io/checkout@v1
@@ -207,8 +229,7 @@ jobs:
         with:
           content: "${{vars.PETCLINIC_SMOKETEST_DEV_RESULTS}} "
           format: MARKDOWN
-    needs:
-      - deploy_dev
+    needs: deploy_dev
   deploy_dev:
     environment: snaqvi_DEV
     steps:
@@ -227,6 +248,7 @@ jobs:
           namespace: ${{ env.NAMESPACE }}-dev
           values: |
             image:
+              repository: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/spring-petclinic
               tag: ${{ cloudbees.scm.sha }}
             fmKey: ${{ secrets.FM_TOKEN }}
             hostname: snaqvi-petclinic-dev.preview.cb-demos.io
@@ -240,8 +262,7 @@ jobs:
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
     needs:
-      - build
-      - static-analysis
+      - container-scan
   deploy_qa:
     environment: snaqvi_QA
     steps:
@@ -260,6 +281,7 @@ jobs:
           namespace: ${{ env.NAMESPACE }}-qa
           values: |
             image:
+              repository: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/spring-petclinic
               tag: ${{ cloudbees.scm.sha }}
             fmKey: ${{ secrets.FM_TOKEN }}
             hostname: snaqvi-petclinic-qa.preview.cb-demos.io
@@ -272,8 +294,7 @@ jobs:
 
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
-    needs:
-      - exit_gate
+    needs: exit_gate
   smokeTest_qa:
     steps:
       - uses: cloudbees-io/checkout@v1
@@ -287,8 +308,7 @@ jobs:
         with:
           content: "${{vars.PETCLINIC_SMOKETEST_QA_RESULTS}} "
           format: MARKDOWN
-    needs:
-      - deploy_qa
+    needs: deploy_qa
   deploy_prod:
     environment: snaqvi_PROD
     steps:
@@ -307,6 +327,7 @@ jobs:
           namespace: ${{ env.NAMESPACE }}-prod
           values: |
             image:
+              repository: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/spring-petclinic
               tag: ${{ cloudbees.scm.sha }}
             fmKey: ${{ secrets.FM_TOKEN }}
             hostname: snaqvi-petclinic-prod.preview.cb-demos.io
@@ -319,8 +340,7 @@ jobs:
 
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
-    needs:
-      - deploy_qa
+    needs: deploy_qa
   smokeTest_prod:
     steps:
       - uses: cloudbees-io/checkout@v1
@@ -334,6 +354,4 @@ jobs:
         with:
           content: "${{vars.PETCLINIC_SMOKETEST_PROD_RESULTS}} "
           format: MARKDOWN
-    needs:
-      - deploy_prod
-
+    needs: deploy_prod
