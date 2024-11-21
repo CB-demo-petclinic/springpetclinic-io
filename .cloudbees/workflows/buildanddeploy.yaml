@@ -9,7 +9,6 @@ on:
 env:
   APP_NAME: spring-petclinic
   NAMESPACE: snaqvi
-
 jobs:
   compile:
     outputs:
@@ -100,14 +99,12 @@ jobs:
           destination: ${{ secrets.STAGING_DOCKER_REGISTRY }}/${{ secrets.STAGING_DOCKER_USERNAME }}/springpetclinic:${{ cloudbees.scm.sha }},${{ secrets.STAGING_DOCKER_REGISTRY }}/${{ secrets.STAGING_DOCKER_USERNAME }}/springpetclinic:latest
           tar-path: container-image.tar
           build-args: BUILDKIT_CONTEXT_KEEP_GIT_DIR=1,BUILDKIT_INLINE_CACHE=1
-      # - uses: calculi-corp/assets-plugin-chain-utils/upload-binary@v1
-      #   name: Upload binary from container build
-      #   continue-on-error: true
-      #   id: upload-binary
-      #   with:
-      #     file-path: container-image.tar
-      #     file-type: BINARY_CONTAINER
-      #     debug: "true"
+    needs:
+      - static-analysis
+      - compile
+      - sca-scan
+      - unit-tests
+      - sast-scan
   static-analysis:
     outputs:
       BLOCKER_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.BLOCKER_COUNT }}
@@ -168,7 +165,8 @@ jobs:
           orgname: ashok.alogicfocus
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           image-location: caannamalai/springpetclinic
-          image-tag: ${{ cloudbees.scm.sha }} 
+          image-tag: ${{ cloudbees.scm.sha }}
+    needs: package
   sast-scan:
     steps:
       - name: Checkout
@@ -205,8 +203,7 @@ jobs:
         name: Manual Approval
         run: |
           echo "Manual approval required before proceeding to deployment."
-    needs:
-      - deploy_dev
+    needs: deploy_dev
   smokeTest_dev:
     steps:
       - uses: cloudbees-io/checkout@v1
@@ -220,8 +217,7 @@ jobs:
         with:
           content: "${{vars.PETCLINIC_SMOKETEST_DEV_RESULTS}} "
           format: MARKDOWN
-    needs:
-      - deploy_dev
+    needs: deploy_dev
   deploy_dev:
     environment: snaqvi_DEV
     steps:
@@ -253,8 +249,7 @@ jobs:
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
     needs:
-      - package
-      - static-analysis
+      - container-scan
   deploy_qa:
     environment: snaqvi_QA
     steps:
@@ -285,8 +280,7 @@ jobs:
 
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
-    needs:
-      - exit_gate
+    needs: exit_gate
   smokeTest_qa:
     steps:
       - uses: cloudbees-io/checkout@v1
@@ -300,8 +294,7 @@ jobs:
         with:
           content: "${{vars.PETCLINIC_SMOKETEST_QA_RESULTS}} "
           format: MARKDOWN
-    needs:
-      - deploy_qa
+    needs: deploy_qa
   deploy_prod:
     environment: snaqvi_PROD
     steps:
@@ -332,8 +325,7 @@ jobs:
 
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
-    needs:
-      - deploy_qa
+    needs: deploy_qa
   smokeTest_prod:
     steps:
       - uses: cloudbees-io/checkout@v1
@@ -347,5 +339,4 @@ jobs:
         with:
           content: "${{vars.PETCLINIC_SMOKETEST_PROD_RESULTS}} "
           format: MARKDOWN
-    needs:
-      - deploy_prod  
+    needs: deploy_prod
