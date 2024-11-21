@@ -155,14 +155,16 @@ jobs:
             | MINOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }} |
           format: MARKDOWN
   container-scan:
+    steps:
       - name: Scan with Snyk Container
         uses: cloudbees-io/snyk-scan-container@v1
         with:
           orgname: ashok.alogicfocus
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           image-location: caannamalai/springpetclinic
-          image-tag: ${{ cloudbees.scm.sha }}
+          image-tag: ${{ cloudbees.scm.sha }} 
   sast-scan:
+    steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
       - uses: cloudbees-io/snyk-sast-scan-code@v1
@@ -173,6 +175,7 @@ jobs:
           token: 79781dde-8b3d-45c6-9561-a2ebc1e9e18c
           language: LANGUAGE_JAVA
   sca-scan:
+    steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
       - uses: cloudbees-io/snyk-sca-scan-dependency@v1
@@ -244,7 +247,7 @@ jobs:
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
     needs:
-      - build
+      - package
       - static-analysis
   deploy_qa:
     environment: snaqvi_QA
