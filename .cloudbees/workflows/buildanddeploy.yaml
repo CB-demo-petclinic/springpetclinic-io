@@ -76,6 +76,8 @@ jobs:
             ## Code Coverage Report
             ${{vars.PETCLINIC_UT_RESULTS}} 
           format: MARKDOWN
+    needs:
+      - evidence-collection
   package:
     steps:
       - name: Checkout
