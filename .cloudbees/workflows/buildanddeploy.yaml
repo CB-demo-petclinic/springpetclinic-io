@@ -173,6 +173,8 @@ jobs:
           orgname: ${{ secrets.SNYK_ORGNAME }}
           token: ${{ secrets.SNYK_TOKEN }}
           language: LANGUAGE_JAVA
+    needs:
+      - evidence-collection
   sca-scan:
     steps:
       - name: Checkout
@@ -184,6 +186,8 @@ jobs:
           orgname: ${{ secrets.SNYK_ORGNAME }}
           token: ${{ secrets.SNYK_TOKEN }}
           language: LANGUAGE_JAVA
+    needs:
+      - evidence-collection
   exit_gate:
     environment: snaqvi_DEV
     steps:
