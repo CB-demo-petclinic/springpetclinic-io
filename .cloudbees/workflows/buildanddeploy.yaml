@@ -110,7 +110,6 @@ jobs:
           build-args: BUILDKIT_CONTEXT_KEEP_GIT_DIR=1,BUILDKIT_INLINE_CACHE=1
     needs:
       - static-analysis
-      - compile
       - sca-scan
       - unit-tests
       - sast-scan
@@ -157,6 +156,8 @@ jobs:
             | MAJOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MAJOR_COUNT }} |
             | MINOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }} |
           format: MARKDOWN
+    needs:
+      - compile
   container-scan:
     steps:
       - name: Scan with Snyk Container
