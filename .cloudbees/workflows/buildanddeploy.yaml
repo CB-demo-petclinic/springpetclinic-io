@@ -10,14 +10,11 @@ env:
   APP_NAME: spring-petclinic
   NAMESPACE: snaqvi
 jobs:
-  compile:
+  evidence-collection:
     outputs:
       commit_id: ${{ steps.commitinfo.outputs.commit_id }}
       commit_msg: ${{ steps.commitinfo.outputs.commit_msg }}
       jira_key: ${{ steps.commitinfo.outputs.jira_key }}
-    artifacts:
-      - path: /cloudbees/workspace/target/*.jar
-        name: Application Artifact
     steps:
       - name: Configure git
         uses: docker://alpine/git:latest
@@ -42,22 +39,6 @@ jobs:
           echo "${COMMIT_ID}" >> $CLOUDBEES_OUTPUTS/commit_id
           echo "${COMMIT_MSG}" >> $CLOUDBEES_OUTPUTS/commit_msg
           echo "${JIRA_KEY}" >> $CLOUDBEES_OUTPUTS/jira_key
-      - uses: docker://maven:3-eclipse-temurin-17
-        name: Build
-        kind: build
-        run: |
-          mvn spring-javaformat:apply
-          mvn clean install
-        shell: sh
-      - name: SonarQube analysis
-        uses: docker://sonarsource/sonar-scanner-cli:latest
-        run: |
-          sonar-scanner \
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
-            -Dsonar.sources=/cloudbees/workspace \
-            -Dsonar.java.binaries=/cloudbees/workspace/target/classes \
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
@@ -95,6 +76,8 @@ jobs:
             ## Code Coverage Report
             ${{vars.PETCLINIC_UT_RESULTS}} 
           format: MARKDOWN
+    needs:
+      - evidence-collection
   package:
     steps:
       - name: Checkout
@@ -133,9 +116,17 @@ jobs:
       MAJOR_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.MAJOR_COUNT }}
       MINOR_COUNT: ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }}
     steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
       - name: Scan with Find Security Bugs
         uses: cloudbees-io/findsecbugs-sast-scan-code@v1
         with:
+          language: LANGUAGE_JAVA
+      - name: Scan with SonarQube bundled
+        uses: cloudbees-io/sonarqube-bundled-sast-scan-code@v1
+        with:
+          sonar-exclusion: src/main/java
+          cover-file-name: ./pom.xml
           language: LANGUAGE_JAVA
       - name: Fetch SonarQube Issues
         id: FetchSonarQubeIssues
@@ -168,7 +159,7 @@ jobs:
             | MINOR_COUNT          | ${{ steps.FetchSonarQubeIssues.outputs.MINOR_COUNT }} |
           format: MARKDOWN
     needs:
-      - compile
+      - evidence-collection
   container-scan:
     steps:
       - name: Scan with Snyk Container
@@ -184,12 +175,14 @@ jobs:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
       - uses: cloudbees-io/snyk-sast-scan-code@v1
-        name: scan1
+        name: Scan with Snyk SAST
         kind: scan
         with:
           orgname: ${{ secrets.SNYK_ORGNAME }}
           token: ${{ secrets.SNYK_TOKEN }}
           language: LANGUAGE_JAVA
+    needs:
+      - evidence-collection
   sca-scan:
     steps:
       - name: Checkout
@@ -207,6 +200,8 @@ jobs:
           content: |-
             ${{vars.PETCLINIC_SCA_SCAN_RESULTS}} 
           format: MARKDOWN                  
+     needs:
+      - evidence-collection
   exit_gate:
     environment: snaqvi_DEV
     steps:
@@ -257,13 +252,13 @@ jobs:
               repository: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/spring-petclinic
               tag: ${{ cloudbees.scm.sha }}
             fmKey: ${{ secrets.FM_TOKEN }}
-            hostname: snaqvi-petclinic-dev.preview.cb-demos.io
+            hostname: ${{ env.NAMESPACE }}-petclinic-dev.preview.cb-demos.io
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
           content: |-
             ## Deployed environment
-            [Dev frontend](https://snaqvi-petclinic-dev.preview.cb-demos.io/)
+            [Dev frontend](https://${{ env.NAMESPACE }}-petclinic-dev.preview.cb-demos.io/)
 
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
@@ -290,13 +285,13 @@ jobs:
               repository: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/spring-petclinic
               tag: ${{ cloudbees.scm.sha }}
             fmKey: ${{ secrets.FM_TOKEN }}
-            hostname: snaqvi-petclinic-qa.preview.cb-demos.io
+            hostname: ${{ env.NAMESPACE }}-petclinic-qa.preview.cb-demos.io
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
           content: |-
             ## Deployed environment
-            [QA frontend](https://snaqvi-petclinic-qa.preview.cb-demos.io/)
+            [QA frontend](https://${{ env.NAMESPACE }}-petclinic-qa.preview.cb-demos.io/)
 
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
@@ -336,13 +331,13 @@ jobs:
               repository: ${{ secrets.DOCKERHUB_STAGE_USERNAME }}/spring-petclinic
               tag: ${{ cloudbees.scm.sha }}
             fmKey: ${{ secrets.FM_TOKEN }}
-            hostname: snaqvi-petclinic-prod.preview.cb-demos.io
+            hostname: ${{ env.NAMESPACE }}-petclinic-prod.preview.cb-demos.io
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
           content: |-
             ## Deployed environment
-            [Production frontend](https://snaqvi-petclinic-prod.preview.cb-demos.io/)
+            [Production frontend](https://${{ env.NAMESPACE }}-petclinic-prod.preview.cb-demos.io/)
 
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
