@@ -200,7 +200,7 @@ jobs:
           content: |-
             ${{vars.PETCLINIC_SCA_SCAN_RESULTS}} 
           format: MARKDOWN                  
-     needs:
+    needs: 
       - evidence-collection
   exit_gate:
     environment: snaqvi_DEV
@@ -216,7 +216,8 @@ jobs:
         name: Manual Approval
         run: |
           echo "Manual approval required before proceeding to deployment."
-    needs: deploy_dev
+    needs: 
+      - deploy_dev
   smokeTest_dev:
     steps:
       - uses: cloudbees-io/checkout@v1
@@ -230,7 +231,8 @@ jobs:
         with:
           content: "${{vars.PETCLINIC_SMOKETEST_DEV_RESULTS}} "
           format: MARKDOWN
-    needs: deploy_dev
+    needs: 
+      - deploy_dev
   deploy_dev:
     environment: snaqvi_DEV
     steps:
@@ -295,7 +297,8 @@ jobs:
 
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
-    needs: exit_gate
+    needs: 
+      - exit_gate
   smokeTest_qa:
     steps:
       - uses: cloudbees-io/checkout@v1
@@ -309,7 +312,8 @@ jobs:
         with:
           content: "${{vars.PETCLINIC_SMOKETEST_QA_RESULTS}} "
           format: MARKDOWN
-    needs: deploy_qa
+    needs: 
+      - deploy_qa
   deploy_prod:
     environment: snaqvi_PROD
     steps:
@@ -341,7 +345,8 @@ jobs:
 
             Running spring-petclinic:${{ cloudbees.scm.sha }}
           format: MARKDOWN
-    needs: deploy_qa
+    needs: 
+      - deploy_qa
   smokeTest_prod:
     steps:
       - uses: cloudbees-io/checkout@v1
@@ -355,4 +360,5 @@ jobs:
         with:
           content: "${{vars.PETCLINIC_SMOKETEST_PROD_RESULTS}} "
           format: MARKDOWN
-    needs: deploy_prod
+    needs: 
+      - deploy_prod
