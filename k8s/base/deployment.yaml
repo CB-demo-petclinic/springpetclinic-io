@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hackers-organized
+  name: spring-petclinic
   labels:
-    app: hackers-organized
+    app: spring-petclinic
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: hackers-organized
+      app: spring-petclinic
   template:
     metadata:
-      name: hackers-organized
+      name: spring-petclinic
       labels:
-        app: hackers-organized
+        app: spring-petclinic
     spec:
       containers:
-        - name: hackers-organized
-          image: ldonleycb/hackers-organized
+        - name: spring-petclinic
+          image: caannamalai/springpetclinic
           imagePullPolicy: Always
           envFrom:
             - configMapRef:
